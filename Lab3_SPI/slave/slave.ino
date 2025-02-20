@@ -1,26 +1,29 @@
 #include <SPI.h>
 
-volatile boolean received = false;
-volatile char receivedData;
-
 void setup() {
-    pinMode(MISO, OUTPUT);  // MISO must be output for SPI slave
-    SPI.begin();            // Initialize SPI as slave
-    SPCR |= _BV(SPIE);      // Enable SPI interrupt
-    Serial.begin(9600);
+  // Initialize SPI as Slave
+  SPCR |= _BV(SPE);  // Enable SPI
+  
+  // Turn on interrupts (optional)
+  SPCR |= _BV(SPIE);
+  
+  // Initialize Serial for debugging
+  Serial.begin(9600);
 }
 
-// Interrupt Service Routine (ISR) for SPI
-ISR(SPI_STC_vect) {  
-    receivedData = SPDR;  // Read received data
-    received = true;
-    SPDR = 'B';  // Send response back to master
+// SPI interrupt routine
+ISR(SPI_STC_vect) {
+  // Read the received data from the SPI Data Register
+  byte receivedData = SPDR;
+  
+  // Send a response back to the master (e.g., received data + 1)
+  SPDR = receivedData + 1;  // Example: Send back received data + 1
+  
+  // Print the received data in decimal
+  Serial.print("Received: ");
+  Serial.println(receivedData);
 }
 
 void loop() {
-    if (received) {
-        Serial.print("Slave received: ");
-        Serial.println(receivedData);
-        received = false;
-    }
+  // The loop can be empty since the SPI communication is handled by the ISR
 }
